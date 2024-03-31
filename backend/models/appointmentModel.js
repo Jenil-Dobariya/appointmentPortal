@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const appointmentSchema = new mongoose.Schema({
   _id: { type: String, required: true, default: () => new mongoose.Types.ObjectId() },
   name: { type: String, required: true },
+  username: { type: String, required: true },
   rollNumber: { type: String, required: true },
   programme: { type: String, required: true },
   department: { type: String, required: true },
@@ -12,7 +13,8 @@ const appointmentSchema = new mongoose.Schema({
   counsellor: { type: String, required: true },
   appointmentDate: { type: Date, required: true },
   appointmentTime: { type: String, required: true },
-  lastVisit: { type: Date, required: true },
+  visit: { type: String, required: true },
+  lastVisitDate: { type: Date, required: false },
   comments: { type: String, required: false },
 });
 

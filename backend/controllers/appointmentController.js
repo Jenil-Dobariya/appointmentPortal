@@ -18,7 +18,7 @@ const addAppointment = async (req, res) => {
     });
 
     await appointment.save();
-    res.status(201).json({ appointment });
+    res.status(200).json({ message: "Appointment added successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
