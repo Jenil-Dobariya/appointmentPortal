@@ -46,7 +46,7 @@ const appointmentTimeOptions = [
 const counsellorOptions = ["Counsellor 1", "Counsellor 2", "Counsellor 3"];
 const visitOptions = ["First Visit", "Follow-up Visit"];
 
-const AppointmentForm = ({ appointments, setAppointments }) => {
+const AppointmentForm = ({ fetchAppointments }) => {
   const [appointment, setAppointment] = useState(appointmentSchema);
 
   const handleInputChange = (e) => {
@@ -65,7 +65,7 @@ const AppointmentForm = ({ appointments, setAppointments }) => {
     setAppointment({ ...appointment, counsellor: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (appointment.appointmentDate === null) {
       toast.error("Please select an appointment date.", {
@@ -85,8 +85,47 @@ const AppointmentForm = ({ appointments, setAppointments }) => {
       });
       return;
     }
-    
-    
+
+    try {
+      const response = await fetch(`http://localhost:8080/user/appointment/add/user1`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: appointment.name,
+          rollNumber: appointment.rollNumber,
+          programme: appointment.programme,
+          department: appointment.department,
+          hall: appointment.hall,
+          roomNumber: appointment.roomNumber,
+          phone: appointment.phone,
+          counsellor: appointment.counsellor,
+          appointmentDate: appointment.appointmentDate,
+          appointmentTime: appointment.appointmentTime,
+          visit: appointment.visit,
+          lastVisitDate: appointment.lastVisitDate,
+          comments: appointment.comments,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("An error occurred. Please try again later.");
+      }
+
+      setAppointment(appointmentSchema);
+      toast.success("Appointment submitted successfully.", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      toast.error("An error occurred. Please try again later.", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    }
+
+    fetchAppointments();
   };
 
   return (

@@ -59,18 +59,18 @@ function formatDate(date) {
   return date.toLocaleDateString("en-US", options);
 }
 
-function History({ appointments, setAppointments }) {
+function History({ appointments, fetchAppointments }) {
   const futureAppointments = [];
   const ongoingAppointments = [];
   const pastAppointments = [];
-
-  const fetchAppointments = () => {};
 
   useEffect(() => {
     fetchAppointments();
   }, []);
 
   appointments.forEach((appointment) => {
+    const date = new Date(appointment.appointmentDate);
+    appointment.appointmentDate = date;
     const status = getStatus(appointment);
     switch (status) {
       case "future":
@@ -90,6 +90,10 @@ function History({ appointments, setAppointments }) {
   const handleRefresh = () => {
     fetchAppointments();
   };
+
+  const handleDelete = () => {
+
+  }
 
   return (
     <Container maxWidth="lg" style={{ height: "100%" }}>
@@ -140,7 +144,7 @@ function History({ appointments, setAppointments }) {
                     marginRight: "-17px",
                   }}
                 >
-                  <IconButton disabled>
+                  <IconButton style={{cursor: "pointer"}} onClick={handleDelete}>
                     <DeleteOutlineIcon style={{ color: "white" }} />
                   </IconButton>
                 </Box>
