@@ -7,7 +7,7 @@ const App = () => {
     <>
       <Router>
         <Routes>
-          <Route path="/student" Component={StudentPage} />
+          <Route path="/student/:username" Component={StudentPage} />
           {/* <Route path="/counsellor" Component={}/> */}
           {/* <Route path="/admin" Component={}/> */}
         </Routes>

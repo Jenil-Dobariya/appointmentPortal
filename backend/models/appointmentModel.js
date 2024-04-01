@@ -1,7 +1,11 @@
 const mongoose = require("mongoose");
 
 const appointmentSchema = new mongoose.Schema({
-  _id: { type: String, required: true, default: () => new mongoose.Types.ObjectId() },
+  _id: {
+    type: String,
+    required: true,
+    default: () => new mongoose.Types.ObjectId(),
+  },
   name: { type: String, required: true },
   rollNumber: { type: String, required: true },
   programme: { type: String, required: true },

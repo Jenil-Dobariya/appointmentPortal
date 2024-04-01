@@ -12,6 +12,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { toast } from "react-toastify";
 
 function getStatus(appointment) {
   const { appointmentDate, appointmentTime } = appointment;
@@ -32,9 +33,9 @@ function getStatus(appointment) {
   );
 
   if (curr > ap) {
-    return "past"; // Appointment passed
+    return "past";
   } else if (curr < ap) {
-    return "future"; // Appointment not started
+    return "future";
   } else {
     const currentHour = currentDate.getHours();
     const currentMin = currentDate.getMinutes();
@@ -42,14 +43,14 @@ function getStatus(appointment) {
       currentHour > endHour ||
       (currentHour === endHour && currentMin > endMin)
     ) {
-      return "past"; // Appointment passed
+      return "past";
     } else if (
       currentHour < startHour ||
       (currentHour === startHour && currentMin < startMin)
     ) {
-      return "future"; // Appointment not started
+      return "future";
     } else {
-      return "ongoing"; // Appointment ongoing
+      return "ongoing";
     }
   }
 }
@@ -59,7 +60,7 @@ function formatDate(date) {
   return date.toLocaleDateString("en-US", options);
 }
 
-function History({ appointments, fetchAppointments }) {
+function History({ appointments, fetchAppointments, username }) {
   const futureAppointments = [];
   const ongoingAppointments = [];
   const pastAppointments = [];
@@ -87,13 +88,39 @@ function History({ appointments, fetchAppointments }) {
     }
   });
 
-  const handleRefresh = () => {
-    fetchAppointments();
+  const handleRefresh = async () => {
+    await fetchAppointments();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async (ID) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/user/appointment/delete/${username}/${ID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-  }
+      if (!res.ok) {
+        throw new Error("An error occurred. Please try again later.");
+      }
+
+      toast.success("Appointment deleted successfully.", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+
+      fetchAppointments();
+    } catch (error) {
+      toast.error("An error occurred. Please try again later.", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+    }
+  };
 
   return (
     <Container maxWidth="lg" style={{ height: "100%" }}>
@@ -144,7 +171,12 @@ function History({ appointments, fetchAppointments }) {
                     marginRight: "-17px",
                   }}
                 >
-                  <IconButton style={{cursor: "pointer"}} onClick={handleDelete}>
+                  <IconButton
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      handleDelete(appointment._id);
+                    }}
+                  >
                     <DeleteOutlineIcon style={{ color: "white" }} />
                   </IconButton>
                 </Box>

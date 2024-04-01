@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Typography,
@@ -13,7 +13,7 @@ import {
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { addMonths, subDays } from "date-fns";
 
@@ -33,21 +33,21 @@ const appointmentSchema = {
   comments: "",
 };
 
-const appointmentTimeOptions = [
-  "10:00 - 11:00",
-  "11:00 - 12:00",
-  "12:00 - 13:00",
-  "13:00 - 14:00",
-  "14:00 - 15:00",
-  "15:00 - 16:00",
-  "16:00 - 17:00",
-  "17:00 - 18:00",
-];
 const counsellorOptions = ["Counsellor 1", "Counsellor 2", "Counsellor 3"];
 const visitOptions = ["First Visit", "Follow-up Visit"];
 
-const AppointmentForm = ({ fetchAppointments }) => {
+const AppointmentForm = ({ fetchAppointments, username }) => {
   const [appointment, setAppointment] = useState(appointmentSchema);
+  const [appointmentTimeOptions, setAppointmentTimeOptions] = useState([
+    "10:00 - 11:00",
+    "11:00 - 12:00",
+    "12:00 - 13:00",
+    "13:00 - 14:00",
+    "14:00 - 15:00",
+    "15:00 - 16:00",
+    "16:00 - 17:00",
+    "17:00 - 18:00",
+  ]);
 
   const handleInputChange = (e) => {
     setAppointment({ ...appointment, [e.target.name]: e.target.value });
@@ -87,27 +87,30 @@ const AppointmentForm = ({ fetchAppointments }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/user/appointment/add/user1`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: appointment.name,
-          rollNumber: appointment.rollNumber,
-          programme: appointment.programme,
-          department: appointment.department,
-          hall: appointment.hall,
-          roomNumber: appointment.roomNumber,
-          phone: appointment.phone,
-          counsellor: appointment.counsellor,
-          appointmentDate: appointment.appointmentDate,
-          appointmentTime: appointment.appointmentTime,
-          visit: appointment.visit,
-          lastVisitDate: appointment.lastVisitDate,
-          comments: appointment.comments,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8080/user/appointment/add/${username}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: appointment.name,
+            rollNumber: appointment.rollNumber,
+            programme: appointment.programme,
+            department: appointment.department,
+            hall: appointment.hall,
+            roomNumber: appointment.roomNumber,
+            phone: appointment.phone,
+            counsellor: appointment.counsellor,
+            appointmentDate: appointment.appointmentDate,
+            appointmentTime: appointment.appointmentTime,
+            visit: appointment.visit,
+            lastVisitDate: appointment.lastVisitDate,
+            comments: appointment.comments,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("An error occurred. Please try again later.");
@@ -127,6 +130,47 @@ const AppointmentForm = ({ fetchAppointments }) => {
 
     fetchAppointments();
   };
+
+  useEffect(() => {
+    const func = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/user/appointment/get/available-times`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              counsellor: appointment.counsellor,
+              date: appointment.appointmentDate,
+            }),
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error("An error occurred. Please try again later.");
+        }
+
+        const data = await res.json();
+        const availableTimes = data.availableTimes;
+        if (availableTimes) {
+          setAppointmentTimeOptions(availableTimes);
+        } else {
+          setAppointmentTimeOptions([]);
+        }
+      } catch (error) {
+        toast.error("An error occurred. Please refresh the page", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }
+    };
+
+    if (appointment.counsellor !== "" && appointment.appointmentDate !== null) {
+      func();
+    }
+  }, [appointment]);
 
   return (
     <Container
@@ -220,7 +264,7 @@ const AppointmentForm = ({ fetchAppointments }) => {
               fullWidth
               variant="outlined"
               margin="dense"
-              style={{ paddingLeft: "8px", backgroundColor: "#fff" }} // Add padding and background color
+              style={{ paddingLeft: "8px", backgroundColor: "#fff" }}
             >
               Counsellor
             </InputLabel>
@@ -251,32 +295,57 @@ const AppointmentForm = ({ fetchAppointments }) => {
             />
           </LocalizationProvider>
           <FormControl fullWidth margin="dense" required variant="outlined">
-            <InputLabel
-              fullWidth
-              variant="outlined"
-              margin="dense"
-              style={{ paddingLeft: "8px", backgroundColor: "#fff" }} // Add padding and background color
-            >
-              Appointment Time
-            </InputLabel>
-            <Select
-              value={appointment.appointmentTime}
-              onChange={handleAppointmentTimeChange}
-              name="appointmentTime"
-            >
-              {appointmentTimeOptions.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </Select>
+            {appointmentTimeOptions.length === 0 ? (
+              <>
+                <InputLabel
+                  fullWidth
+                  variant="outlined"
+                  margin="dense"
+                  style={{
+                    paddingLeft: "8px",
+                    backgroundColor: "#fff",
+                    color: "rgb(255, 59, 48)",
+                  }}
+                >
+                  No slots available on selected date for selected counsellor
+                </InputLabel>
+                <Select
+                  value={appointment.appointmentTime}
+                  onChange={handleAppointmentTimeChange}
+                  name="appointmentTime"
+                  disabled
+                ></Select>
+              </>
+            ) : (
+              <>
+                <InputLabel
+                  fullWidth
+                  variant="outlined"
+                  margin="dense"
+                  style={{ paddingLeft: "8px", backgroundColor: "#fff" }}
+                >
+                  Appointment Time
+                </InputLabel>
+                <Select
+                  value={appointment.appointmentTime}
+                  onChange={handleAppointmentTimeChange}
+                  name="appointmentTime"
+                >
+                  {appointmentTimeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </>
+            )}
           </FormControl>
           <FormControl fullWidth margin="dense" required variant="outlined">
             <InputLabel
               fullWidth
               variant="outlined"
               margin="dense"
-              style={{ paddingLeft: "8px", backgroundColor: "#fff" }} // Add padding and background color
+              style={{ paddingLeft: "8px", backgroundColor: "#fff" }}
             >
               Visit
             </InputLabel>
@@ -320,7 +389,6 @@ const AppointmentForm = ({ fetchAppointments }) => {
             Submit
           </Button>
         </form>
-        <ToastContainer />
       </Box>
     </Container>
   );
